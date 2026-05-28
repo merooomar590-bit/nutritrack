@@ -238,6 +238,10 @@
         </div>
     </div>
 
+    <!-- استدعاء قاعدة البيانات هنا ليتم تحميلها أولاً -->
+    <script src="database.js"></script>
+
+    <!-- الأكواد البرمجية الأساسية للبرنامج -->
     <script>
         const nutrientsConfig = [
             { id: "cal", name: "السعرات", group: "macros", unit: "kcal", goal: 2000, color: "#27ae60", info: { func: "طاقة الجسم.", defHarm: "نقص وزن، ضعف.", excHarm: "تراكم الدهون." } },
@@ -279,9 +283,6 @@
             { id: "val", name: "فالين", group: "aminos", unit: "g", goal: 1.8, color: "#ffeaa7", info: { func: "تجديد الأنسجة.", defHarm: "ضعف عضلي.", excHarm: "آمن." } }
         ];
 
-        let rawFoodDB = [
-        ];
-
         function processFoodData(food) {
             if(food.cal === undefined || food.cal === 0) food.cal = Math.round(((food.pro||0) * 4) + ((food.carb||0) * 4) + ((food.fat||0) * 9));
             let p = food.pro || 0;
@@ -304,6 +305,9 @@
         let currentDaily = {};
 
         function initializeApp() {
+            // التحقق من أن قاعدة البيانات موجودة وإذا لم تكن موجودة نعطيها مصفوفة فارغة لتجنب الأعطال
+            if (typeof rawFoodDB === 'undefined') { window.rawFoodDB = []; }
+            
             rawFoodDB.forEach((food, index) => { food.id = index + 1; processFoodData(food); });
             nutrientsConfig.forEach(n => currentDaily[n.id] = 0);
             renderMealContainers();
@@ -495,10 +499,6 @@
             return false;
         }
         initializeApp();
-<script src="database.js"></script>
-<script>
-    // باقي الكود الخاص بك سيبقى كما هو هنا
-    const nutrientsConfig = [ ...
     </script>
 </body>
 </html>
