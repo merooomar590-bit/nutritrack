@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriTrack | Clinical Master Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #27ae60; --primary-light: #e8f8f5; --blue: #3498db; --orange: #e67e22; 
+            --red: #e74c3c; --dark: #2c3e50; --gray: #f5f6fa; --text-muted: #7f8fa6;
+            --bg: #eceff1; --card-bg: #ffffff; --shadow: 0 8px 16px rgba(0,0,0,0.05);
+            --border-radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg); color: var(--dark); padding: 20px; font-size: 14px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--dark); color: white; padding: 20px 30px; border-radius: var(--border-radius); margin-bottom: 25px; box-shadow: var(--shadow); }
+        .header h1 { font-weight: 900; font-size: 22px; display: flex; align-items: center; gap: 10px; margin: 0; }
+        .save-badge { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+
+        .dashboard { display: grid; grid-template-columns: 320px 1fr 340px; gap: 20px; max-width: 1600px; margin: 0 auto; }
+        @media(max-width: 1200px) { .dashboard { grid-template-columns: 1fr 1fr; } .tools-panel { grid-column: span 2; } }
+        @media(max-width: 800px) { .dashboard { grid-template-columns: 1fr; } .tools-panel { grid-column: span 1; } }
+
+        .card { background: var(--card-bg); padding: 20px; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 20px; }
+        .card-title { font-size: 17px; font-weight: 800; border-bottom: 2px solid var(--gray); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
+        
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .full-width { grid-column: span 2; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+        .input-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        input, select { width: 100%; padding: 10px; border: 2px solid #dfe4ea; border-radius: 8px; outline: none; transition: 0.3s; font-weight: 700; font-size: 14px; background: #fff;}
+        input:focus, select:focus { border-color: var(--primary); }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: center; width: 100%; }
+        .btn:hover { background: #219653; }
+        .btn-blue { background: var(--blue); } .btn-blue:hover { background: #2980b9; }
+        .btn-danger { background: var(--red); color: white; width: auto; padding: 6px 12px; font-size: 12px; }
+
+        .macro-card { background: var(--gray); padding: 15px; border-radius: 12px; margin-bottom: 12px; }
+        .macro-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 13px; }
+        .progress-track { height: 10px; background: #dfe4ea; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease-out, background-color 0.3s; }
+        
+        #bar-cal .progress-fill { background: var(--primary); }
+        #bar-pro .progress-fill { background: var(--blue); }
+        #bar-carb .progress-fill { background: var(--orange); }
+        #bar-fat .progress-fill { background: #f1c40f; }
+
+        .meal-section { border: 1px solid var(--gray); border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
+        .meal-header { background: var(--gray); padding: 10px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .meal-header span.meal-cal { font-size: 12px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 20px; }
+        .meal-items { list-style: none; padding: 0; }
+        .meal-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid var(--gray); background: white; }
+        .meal-item:last-child { border-bottom: none; }
+        .meal-item-info { display: flex; flex-direction: column; }
+        .meal-item-name { font-weight: 700; font-size: 13px; }
+        .meal-item-details { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+        .delete-btn { color: var(--red); cursor: pointer; font-size: 16px; border: none; background: none; padding: 5px; }
+
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-results { max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
+        .search-results::-webkit-scrollbar { width: 5px; }
+        .search-results::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+        .food-card { background: white; border: 1px solid var(--gray); padding: 12px; border-radius: 10px; transition: 0.2s; }
+        .food-card:hover { border-color: var(--blue); }
+        .food-card-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; font-size: 13px; }
+        .food-card-cat { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 4px; }
+        .food-add-controls { display: flex; gap: 5px; margin-top: 10px; }
+        .food-add-controls input { width: 70px; padding: 6px; text-align: center; }
+        .food-add-controls select { flex: 1; padding: 6px; }
+        .food-add-controls button { background: var(--blue); color: white; border: none; border-radius: 6px; width: 40px; cursor: pointer; font-weight: bold;}
+
+        .tabs { display: flex; border-bottom: 2px solid var(--gray); margin-bottom: 15px; gap: 5px; }
+        .tab-btn { flex: 1; background: none; border: none; padding: 10px 5px; font-weight: bold; font-size: 11px; color: var(--text-muted); cursor: pointer; position: relative; white-space: nowrap; }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background: var(--primary); }
+        .tab-content { display: none; max-height: 500px; overflow-y: auto; padding-right: 5px; }
+        .tab-content.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; }
+
+        .micro-circle { text-align: center; background: var(--gray); padding: 10px 5px; border-radius: 10px; position: relative; cursor: help; }
+        .micro-circle-wrap { width: 50px; height: 50px; margin: 0 auto 8px; border-radius: 50%; background: conic-gradient(var(--color) var(--percentage, 0%), #ddd 0); display: flex; justify-content: center; align-items: center; }
+        .micro-circle-inner { width: 40px; height: 40px; background: var(--gray); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 900; color: var(--dark); }
+        .micro-name { font-size: 11px; font-weight: 800; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .micro-val { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-top: 2px; }
+        
+        .tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); width: 200px; background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); z-index: 100; text-align: right; font-size: 11px; line-height: 1.5; pointer-events: none;}
+        .micro-circle:hover .tooltip { display: block; }
+        .tooltip strong { color: var(--primary); }
+        .tooltip .danger { color: var(--red); }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; width: 95%; max-width: 800px; max-height: 90vh; border-radius: 15px; padding: 25px; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; top: 15px; left: 20px; font-size: 28px; cursor: pointer; color: var(--red); font-weight: bold; }
+        .form-section { margin-bottom: 20px; background: var(--gray); padding: 15px; border-radius: 10px; }
+        .form-section h3 { font-size: 14px; margin-bottom: 12px; color: var(--dark); border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 5px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+        
+        .report-list { list-style: none; padding-right: 15px; }
+        .report-list li { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-size: 13px;}
+        .report-list li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .status-good { color: var(--primary); font-weight: bold; }
+        .status-warn { color: var(--orange); font-weight: bold; }
+        .status-danger { color: var(--red); font-weight: bold; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #reportModal { visibility: visible; position: absolute; left: 0; top: 0; background: white; width: 100%; height: auto; display: block; }
+            #reportModal * { visibility: visible; }
+            .print-hide, .print-hide * { display: none !important; visibility: hidden !important; }
+            .modal-content { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; overflow: visible; }
+            .form-section { border: 1px solid #ddd; background: #fff; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>⚕️ NutriTrack Master</h1>
+        <div class="save-badge">💾 حفظ محلي نشط</div>
+    </div>
+
+    <div class="modal-overlay" id="customFoodModal">
+        <div class="modal-content">
+            <span class="modal-close print-hide" onclick="closeModal()">&times;</span>
+            <h2 style="color: var(--primary); margin-bottom: 10px;">📝 إضافة طعام جديد للقاعدة (لكل 100 جرام)</h2>
+            <p style="font-size: 12px; color: #777; margin-bottom: 20px;">* أدخل القيم المتاحة، سيتم حساب السعرات والأحماض الأمينية الناقصة آلياً.</p>
+            <div id="customFoodForm"></div>
+            <button class="btn btn-blue print-hide" style="margin-top: 15px;" onclick="saveCustomFood()">💾 حفظ الطعام للقاعدة</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close print-hide" onclick="closeReportModal()">&times;</span>
+            <h2 style="color: var(--dark); margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">📋 التقرير السريري الشامل لليوم</h2>
+            <div id="reportContent"></div>
+            <div class="print-hide" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-blue" onclick="window.print()">🖨️ طباعة التقرير</button>
+                <button class="btn" onclick="closeReportModal()">حسنًا، إغلاق التقرير</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="settings-panel">
+            <div class="card">
+                <div class="card-title">🎯 إعدادات الجسم</div>
+                <div class="settings-grid">
+                    <div class="input-group"><label>العمر</label><input type="number" id="userAge" value="25"></div>
+                    <div class="input-group">
+                        <label>الجنس</label>
+                        <select id="userGender"><option value="male">ذكر</option><option value="female">أنثى</option></select>
+                    </div>
+                    <div class="input-group"><label>الوزن (كجم)</label><input type="number" id="userWeight" value="75"></div>
+                    <div class="input-group"><label>الطول (سم)</label><input type="number" id="userHeight" value="175"></div>
+                    <div class="input-group full-width">
+                        <label>مستوى النشاط</label>
+                        <select id="userActivity">
+                            <option value="1.2">خامل (عمل مكتبي)</option>
+                            <option value="1.375">نشاط خفيف</option>
+                            <option value="1.55">نشاط متوسط</option>
+                            <option value="1.725">رياضي محترف</option>
+                        </select>
+                    </div>
+                    <div class="input-group full-width">
+                        <label>تعديل السعرات يدوياً (اختياري)</label>
+                        <input type="number" id="manualCalGoal" onchange="updateManualCalories()">
+                    </div>
+                    <button class="btn full-width" onclick="calculateGoals()">حساب التحديث وتطبيقه</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 التحليل السريري</div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="openTab('vitamins', this)">الفيتامينات</button>
+                    <button class="tab-btn" onclick="openTab('minerals', this)">المعادن</button>
+                    <button class="tab-btn" onclick="openTab('aminos', this)">الأحماض (EAAs)</button>
+                    <button class="tab-btn" onclick="openTab('lipids', this)">الدهون والألياف</button>
+                </div>
+                <div id="vitamins" class="tab-content active"></div>
+                <div id="minerals" class="tab-content"></div>
+                <div id="aminos" class="tab-content"></div>
+                <div id="lipids" class="tab-content"></div>
+            </div>
+        </div>
+
+        <div class="main-panel">
+            <div class="card">
+                <div class="card-title">🔥 ملخص السعرات والماكروز</div>
+                <div class="macro-card" id="bar-cal">
+                    <div class="macro-header"><span>السعرات الحرارية</span><span id="text-cal">0 / 2000 kcal</span></div>
+                    <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="macro-card" id="bar-pro">
+                        <div class="macro-header"><span>بروتين</span><span id="text-pro">0g</span></div>
+                        <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="macro-card" id="bar-carb">
+                        <div class="macro-header"><span>كارب</span><span id="text-carb">0g</span></div>
+                        <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="macro-card" id="bar-fat">
+                        <div class="macro-header"><span>دهون</span><span id="text-fat">0g</span></div>
+                        <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    🍽️ سجل المتناول اليومي
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn btn-blue" onclick="generateDailyReport()" style="width: auto; padding: 6px 12px; font-size: 12px;">📋 تقرير اليوم</button>
+                        <button class="btn btn-danger" onclick="clearDaily()">تصفير 🔄</button>
+                    </div>
+                </div>
+                <div id="mealsContainer"></div>
+            </div>
+        </div>
+
+        <div class="tools-panel">
+            <div class="card">
+                <div class="card-title">🔍 قاعدة البيانات</div>
+                <button class="btn btn-blue" style="margin-bottom: 15px;" onclick="openModal()">+ إضافة منتج مخصص</button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="ابحث في الأصناف..." onkeyup="filterFoods()">
+                </div>
+                <div class="search-results" id="searchResults">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 12px;">اكتب اسم الطعام للبحث أو قم بإضافة طعام جديد</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nutrientsConfig = [
+            { id: "cal", name: "السعرات", group: "macros", unit: "kcal", goal: 2000, color: "#27ae60", info: { func: "طاقة الجسم.", defHarm: "نقص وزن، ضعف.", excHarm: "تراكم الدهون." } },
+            { id: "pro", name: "البروتين", group: "macros", unit: "g", goal: 120, color: "#2980b9", info: { func: "بناء الأنسجة.", defHarm: "هدم عضلي.", excHarm: "عبء على الكلى." } },
+            { id: "carb", name: "الكارب", group: "macros", unit: "g", goal: 200, color: "#e67e22", info: { func: "وقود الدماغ.", defHarm: "دوخة.", excHarm: "مقاومة أنسولين." } },
+            { id: "fat", name: "الدهون", group: "macros", unit: "g", goal: 65, color: "#f39c12", info: { func: "الهرمونات.", defHarm: "خلل هرموني.", excHarm: "أمراض القلب." } },
+            { id: "fiber", name: "الألياف", group: "lipids", unit: "g", goal: 30, color: "#1abc9c", info: { func: "تحسين صحة الهضم ودعم الشعور بالشبع وتنظيم السكر في الدم.", defHarm: "إمساك واضطرابات هضمية.", excHarm: "غازات ونقص امتصاص المعادن." } },
+            { id: "chol", name: "الكوليسترول", group: "lipids", unit: "mg", goal: 300, color: "#95a5a6", info: { func: "بناء الأغشية الخلوية وإنتاج الهرمونات وفيتامين د.", defHarm: "خلل هرموني غير شائع.", excHarm: "مخاطر تصلب الشرايين وأمراض القلب." } },
+            { id: "hdl", name: "HDL النافع", group: "lipids", unit: "mg", goal: 50, color: "#2ecc71", info: { func: "نقل الكوليسترول الزائد من الشرايين إلى الكبد للتخلص منه.", defHarm: "زيادة مخاطر الإصابة بأمراض القلب.", excHarm: "مؤشر ممتاز وصحي للقلب والشرايين." } },
+            { id: "ldl", name: "LDL الضار", group: "lipids", unit: "mg", goal: 100, color: "#e74c3c", info: { func: "ينقل الكوليسترول للخلايا، لكن زيادته تسبب ترسبات دهنية.", defHarm: "آمن وضمن الحدود الطبيعية.", excHarm: "تراكم اللويحات وتصلب الشرايين والجلطات." } },
+            { id: "satFat", name: "دهون مشبعة", group: "lipids", unit: "g", goal: 20, color: "#d35400", info: { func: "توفير الطاقة للجسم والمساعدة في وظائف الخلايا وهيكلها.", defHarm: "انخفاض مستويات الطاقة الحيوية.", excHarm: "ارتفاع مستويات الكوليسترول الضار LDL بالشرايين." } },
+            { id: "unsatFat", name: "دهون غير مشبعة", group: "lipids", unit: "g", goal: 45, color: "#3498db", info: { func: "تقليل الالتهابات، وحماية القلب، ودعم خلايا الدماغ والأعصاب.", defHarm: "جفاف الجلد وخلل في التوصيل العصبي.", excHarm: "زيادة الوزن بسبب محتواها العالي من السعرات." } },
+            { id: "transFat", name: "دهون متحولة", group: "lipids", unit: "g", goal: 1, color: "#9b59b6", info: { func: "دهون صناعية مهدرجة ضارة جداً ولا تحمل أي وظيفة حيوية.", defHarm: "الحالة المثالية للجسم هي (صفر جرام).", excHarm: "التهابات حادة، مقاومة أنسولين، وأمراض القلب." } },
+            { id: "vitA", name: "فيتامين A", group: "vitamins", unit: "mcg", goal: 900, color: "#f1c40f", info: { func: "صحة العين.", defHarm: "العمى الليلي.", excHarm: "تسمم الكبد." } },
+            { id: "vitB1", name: "B1", group: "vitamins", unit: "mg", goal: 1.2, color: "#e84393", info: { func: "طاقة.", defHarm: "مرض البري بري.", excHarm: "آمن." } },
+            { id: "vitB2", name: "B2", group: "vitamins", unit: "mg", goal: 1.3, color: "#e84393", info: { func: "حماية الخلايا.", defHarm: "تشقق الشفاه.", excHarm: "آمن." } },
+            { id: "vitB3", name: "B3", group: "vitamins", unit: "mg", goal: 16, color: "#e84393", info: { func: "إصلاح DNA.", defHarm: "البلاغرا.", excHarm: "تورد الجلد." } },
+            { id: "vitB5", name: "B5", group: "vitamins", unit: "mg", goal: 5, color: "#e84393", info: { func: "الهرمونات.", defHarm: "تعب.", excHarm: "نادر." } },
+            { id: "vitB6", name: "B6", group: "vitamins", unit: "mg", goal: 1.7, color: "#e84393", info: { func: "نواقل عصبية.", defHarm: "اكتئاب.", excHarm: "تلف أعصاب." } },
+            { id: "vitB9", name: "B9", group: "vitamins", unit: "mcg", goal: 400, color: "#e84393", info: { func: "تكوين الدم.", defHarm: "أنيميا.", excHarm: "آمن." } },
+            { id: "vitB12", name: "B12", group: "vitamins", unit: "mcg", goal: 2.4, color: "#e84393", info: { func: "صحة الأعصاب.", defHarm: "أنيميا خبيثة.", excHarm: "آمن." } },
+            { id: "vitC", name: "فيتامين C", group: "vitamins", unit: "mg", goal: 90, color: "#ff7675", info: { func: "مناعة وكولاجين.", defHarm: "الاسقربوط.", excHarm: "حصوات الكلى." } },
+            { id: "vitD", name: "فيتامين D", group: "vitamins", unit: "mcg", goal: 20, color: "#fdcb6e", info: { func: "امتصاص الكالسيوم.", defHarm: "هشاشة عظام.", excHarm: "تكلس القلب." } },
+            { id: "vitE", name: "فيتامين E", group: "vitamins", unit: "mg", goal: 15, color: "#00b894", info: { func: "مضاد أكسدة.", defHarm: "تلف شبكية.", excHarm: "سيولة الدم." } },
+            { id: "ca", name: "كالسيوم", group: "minerals", unit: "mg", goal: 1000, color: "#8e44ad", info: { func: "عظام وأسنان.", defHarm: "هشاشة عظام.", excHarm: "حصوات الكلى." } },
+            { id: "fe", name: "حديد", group: "minerals", unit: "mg", goal: 18, color: "#c0392b", info: { func: "نقل الأكسجين.", defHarm: "أنيميا.", excHarm: "تسمم كبدي." } },
+            { id: "mg", name: "مغنيسيوم", group: "minerals", unit: "mg", goal: 400, color: "#16a085", info: { func: "استرخاء العضلات.", defHarm: "تشنجات.", excHarm: "هبوط ضغط الدم." } },
+            { id: "zn", name: "زنك", group: "minerals", unit: "mg", goal: 11, color: "#34495e", info: { func: "مناعة.", defHarm: "ضعف مناعة.", excHarm: "آمن." } },
+            { id: "k", name: "بوتاسيوم", group: "minerals", unit: "mg", goal: 3400, color: "#f1c40f", info: { func: "تنظيم ضغط ونبض.", defHarm: "اضطراب نبض.", excHarm: "توقف القلب." } },
+            { id: "na", name: "صوديوم", group: "minerals", unit: "mg", goal: 2300, color: "#7f8c8d", info: { func: "توازن السوائل.", defHarm: "هبوط وصدمة.", excHarm: "ضغط دم مرتفع." } },
+            { id: "his", name: "هستيدين", group: "aminos", unit: "g", goal: 1.0, color: "#6c5ce7", info: { func: "مناعة.", defHarm: "ضعف مناعة.", excHarm: "آمن." } },
+            { id: "iso", name: "آيزوليوسين", group: "aminos", unit: "g", goal: 1.5, color: "#74b9ff", info: { func: "سكر الدم وطاقة.", defHarm: "إرهاق.", excHarm: "آمن." } },
+            { id: "leu", name: "ليوسين", group: "aminos", unit: "g", goal: 3.0, color: "#a29bfe", info: { func: "بناء عضلي.", defHarm: "فقدان عضلات.", excHarm: "آمن." } },
+            { id: "lys", name: "لايسين", group: "aminos", unit: "g", goal: 2.8, color: "#fd79a8", info: { func: "كولاجين.", defHarm: "تساقط شعر.", excHarm: "آمن." } },
+            { id: "met", name: "ميثيونين", group: "aminos", unit: "g", goal: 1.5, color: "#55efc4", info: { func: "جلد وأظافر.", defHarm: "تلف الجلد.", excHarm: "إجهاد الكبد." } },
+            { id: "phe", name: "فينيل ألانين", group: "aminos", unit: "g", goal: 2.5, color: "#81ecec", info: { func: "دوبامين.", defHarm: "اكتئاب.", excHarm: "آمن." } },
+            { id: "thr", name: "ثريونين", group: "aminos", unit: "g", goal: 1.5, color: "#00cec9", info: { func: "دعم المينا.", defHarm: "ضعف أسنان.", excHarm: "آمن." } },
+            { id: "trp", name: "تريبتوفان", group: "aminos", unit: "g", goal: 0.4, color: "#00b894", info: { func: "سيروتونين.", defHarm: "أرق.", excHarm: "نعاس شديد." } },
+            { id: "val", name: "فالين", group: "aminos", unit: "g", goal: 1.8, color: "#ffeaa7", info: { func: "تجديد الأنسجة.", defHarm: "ضعف عضلي.", excHarm: "آمن." } }
+        ];
+
+        let rawFoodDB = [
+        ];
+
+        function processFoodData(food) {
+            if(food.cal === undefined || food.cal === 0) food.cal = Math.round(((food.pro||0) * 4) + ((food.carb||0) * 4) + ((food.fat||0) * 9));
+            let p = food.pro || 0;
+            if(p > 0) {
+                if(food.leu === undefined) food.leu = p * 0.08;
+                if(food.lys === undefined) food.lys = p * 0.07;
+                if(food.val === undefined) food.val = p * 0.05;
+                if(food.iso === undefined) food.iso = p * 0.05;
+                if(food.thr === undefined) food.thr = p * 0.04;
+                if(food.phe === undefined) food.phe = p * 0.04;
+                if(food.met === undefined) food.met = p * 0.02;
+                if(food.his === undefined) food.his = p * 0.03;
+                if(food.trp === undefined) food.trp = p * 0.01;
+            }
+            return food;
+        }
+
+        const mealTypes = [{ id: 'breakfast', name: '🍳 الإفطار' }, { id: 'lunch', name: '🍱 الغداء' }, { id: 'dinner', name: '🌙 العشاء' }, { id: 'snacks', name: '🍎 سناكس' }];
+        let diary = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+        let currentDaily = {};
+
+        function initializeApp() {
+            rawFoodDB.forEach((food, index) => { food.id = index + 1; processFoodData(food); });
+            nutrientsConfig.forEach(n => currentDaily[n.id] = 0);
+            renderMealContainers();
+            renderMicrosTabs();
+            renderCustomFoodForm();
+            if(!loadData()) calculateGoals();
+            updateDashboard();
+        }
+
+        function calculateGoals() {
+            const age = Number(document.getElementById('userAge').value);
+            const gender = document.getElementById('userGender').value;
+            const weight = Number(document.getElementById('userWeight').value);
+            const height = Number(document.getElementById('userHeight').value);
+            const activity = Number(document.getElementById('userActivity').value);
+            let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+            bmr += (gender === 'male') ? 5 : -161;
+            const tdee = Math.round(bmr * activity);
+            document.getElementById('manualCalGoal').value = tdee;
+            applyCalorieGoal(tdee, weight, gender);
+        }
+
+        function updateManualCalories() {
+            const newCal = Number(document.getElementById('manualCalGoal').value);
+            const weight = Number(document.getElementById('userWeight').value) || 75; 
+            const gender = document.getElementById('userGender').value;
+            if (newCal >= 500) applyCalorieGoal(newCal, weight, gender);
+        }
+
+        function applyCalorieGoal(calories, weight, gender) {
+            const proteinGoal = weight * 1.8; 
+            const fatGoal = weight * 0.9; 
+            const carbGoal = (calories - (proteinGoal * 4) - (fatGoal * 9)) / 4;
+            nutrientsConfig.find(n => n.id === 'cal').goal = calories;
+            nutrientsConfig.find(n => n.id === 'pro').goal = Math.round(proteinGoal);
+            nutrientsConfig.find(n => n.id === 'carb').goal = Math.round(Math.max(0, carbGoal));
+            nutrientsConfig.find(n => n.id === 'fat').goal = Math.round(fatGoal);
+            nutrientsConfig.find(n => n.id === 'fe').goal = (gender === 'female') ? 18 : 8;
+            saveData();
+            updateDashboard();
+        }
+
+        function renderMealContainers() {
+            const container = document.getElementById('mealsContainer');
+            container.innerHTML = mealTypes.map(meal => `<div class="meal-section"><div class="meal-header"><span>${meal.name}</span><span class="meal-cal" id="cal-${meal.id}">0 kcal</span></div><ul class="meal-items" id="list-${meal.id}"></ul></div>`).join('');
+        }
+
+        function renderMicrosTabs() {
+            ['vitamins', 'minerals', 'aminos', 'lipids'].forEach(group => {
+                const container = document.getElementById(group);
+                container.innerHTML = nutrientsConfig.filter(n => n.group === group).map(n => `<div class="micro-circle"><div class="tooltip"><strong>${n.name}</strong><br>الهدف: ${n.goal} ${n.unit}<br><strong>الوظيفة:</strong> ${n.info.func}<br><span class="danger">نقص:</span> ${n.info.defHarm}<br><span class="danger">زيادة:</span> ${n.info.excHarm}</div><div class="micro-circle-wrap" id="wrap-${n.id}" style="--color: ${n.color}"><div class="micro-circle-inner" id="val-${n.id}">0%</div></div><div class="micro-name">${n.name}</div><div class="micro-val" id="text-${n.id}">0 / ${n.goal}</div></div>`).join('');
+            });
+        }
+
+        function openTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        function renderCustomFoodForm() {
+            const groupsMap = { macros: "🔥 الماكروز", lipids: "🧪 الدهون والألياف", vitamins: "💊 الفيتامينات", minerals: "🪨 المعادن", aminos: "🧬 أحماض أمينية" };
+            let formHTML = `<div class="form-section"><h3>🏷️ أساسيات</h3><div class="form-grid"><div class="input-group"><label>اسم الطعام</label><input type="text" id="cf_name"></div><div class="input-group"><label>التصنيف</label><input type="text" id="cf_cat" placeholder="سناكس..."></div></div></div>`;
+            for (let group in groupsMap) {
+                formHTML += `<div class="form-section"><h3>${groupsMap[group]}</h3><div class="form-grid">`;
+                nutrientsConfig.filter(n => n.group === group).forEach(n => { formHTML += `<div class="input-group"><label>${n.name} (${n.unit})</label><input type="number" id="cf_${n.id}" placeholder="0" min="0" step="0.1"></div>`; });
+                formHTML += `</div></div>`;
+            }
+            document.getElementById('customFoodForm').innerHTML = formHTML;
+        }
+
+        function openModal() { document.getElementById('customFoodModal').classList.add('active'); }
+        function closeModal() { document.getElementById('customFoodModal').classList.remove('active'); }
+
+        function saveCustomFood() {
+            const name = document.getElementById('cf_name').value.trim();
+            if(!name) return alert('الرجاء كتابة اسم الطعام');
+            let newFood = { id: rawFoodDB.length + 1, name: name, cat: document.getElementById('cf_cat').value.trim() || 'مخصص' };
+            nutrientsConfig.forEach(n => { let val = parseFloat(document.getElementById(`cf_${n.id}`).value); newFood[n.id] = isNaN(val) ? undefined : val; });
+            processFoodData(newFood);
+            nutrientsConfig.forEach(n => { if(newFood[n.id] === undefined) newFood[n.id] = 0; });
+            rawFoodDB.push(newFood);
+            saveData();
+            alert('تم الإضافة بنجاح!');
+            closeModal();
+            document.getElementById('searchInput').value = name;
+            filterFoods();
+        }
+
+        function filterFoods() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const resultsBox = document.getElementById('searchResults');
+            if (query.trim() === '') { resultsBox.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 12px;">اكتب اسم الطعام للبحث...</div>'; return; }
+            const filtered = rawFoodDB.filter(f => f.name.toLowerCase().includes(query) || f.cat.toLowerCase().includes(query));
+            resultsBox.innerHTML = filtered.map(food => `<div class="food-card"><div class="food-card-header"><span>${food.name}</span><span class="food-card-cat">${food.cat}</span></div><div style="font-size: 11px; color: #777;">${food.cal} kcal | ${food.pro}g بروتين</div><div class="food-add-controls"><input type="number" id="weight-${food.id}" value="100" min="1"><select id="mealSelect-${food.id}">${mealTypes.map(m => `<option value="${m.id}">${m.name.split(' ')[1]}</option>`).join('')}</select><button onclick="addFood(${food.id})">+</button></div></div>`).join('');
+        }
+
+        function addFood(id) {
+            const food = rawFoodDB.find(f => f.id === id);
+            const weight = Number(document.getElementById(`weight-${id}`).value);
+            const mealTarget = document.getElementById(`mealSelect-${id}`).value;
+            if (!weight || weight <= 0) return;
+            const multiplier = weight / 100;
+            let item = { id: Date.now(), baseFood: food, weight: weight, name: food.name, meal: mealTarget };
+            diary[mealTarget].push(item);
+            saveData();
+            document.getElementById('searchInput').value = '';
+            filterFoods();
+            updateDashboard();
+        }
+
+        function removeFood(mealType, itemId) { diary[mealType] = diary[mealType].filter(i => i.id !== itemId); saveData(); updateDashboard(); }
+        function clearDaily() { if(!confirm("مسح بيانات اليوم؟")) return; diary = { breakfast: [], lunch: [], dinner: [], snacks: [] }; saveData(); updateDashboard(); }
+        function closeReportModal() { document.getElementById('reportModal').classList.remove('active'); }
+
+        function generateDailyReport() {
+            const today = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            let html = `<div style="text-align: right; font-size: 14px; color: #555; margin-bottom: 20px; font-weight: bold; background: #f9f9f9; padding: 10px; border-radius: 8px;">📅 تاريخ التقرير: ${today}</div>`;
+            const calGoal = nutrientsConfig.find(n => n.id === 'cal').goal;
+            const calCurrent = currentDaily['cal'];
+            let calStatus = calCurrent > calGoal ? `<span class="status-danger">تجاوزت الهدف بـ ${(calCurrent - calGoal).toFixed(0)} سعرة 🛑</span>` : `<span class="status-good">متبقي لك ${(calGoal - calCurrent).toFixed(0)} سعرة 🟢</span>`;
+            html += `<div class="form-section"><h3>🔥 ملخص الطاقة</h3><p style="font-size: 14px; margin-top: 5px;">استهلكت <strong>${calCurrent.toFixed(0)}</strong> من أصل <strong>${calGoal}</strong> (${calStatus})</p></div>`;
+            let deficiencies = nutrientsConfig.filter(n => n.id !== 'cal' && currentDaily[n.id] < n.goal * 0.7);
+            html += `<div class="form-section" style="border-right: 4px solid ${deficiencies.length > 0 ? 'var(--orange)' : 'var(--primary)'};"><h3 style="color: ${deficiencies.length > 0 ? 'var(--orange)' : 'var(--primary)'};">⚠️ نواقص تحتاج انتباهك (< 70%)</h3>`;
+            if(deficiencies.length > 0) { html += `<ul class="report-list">${deficiencies.map(n => `<li><strong>${n.name}</strong>: استهلاكك <span class="status-warn">${currentDaily[n.id].toFixed(1)}</span> (الهدف ${n.goal})<br><span style="font-size:11px; color:#666;">📌 وظيفته: ${n.info.func}</span></li>`).join('')}</ul>`; }
+            else { html += `<p class="status-good" style="margin-top: 10px;">أداء ممتاز! غطيت معظم احتياجاتك اليوم. 🌟</p>`; }
+            html += `</div>`;
+            let excesses = nutrientsConfig.filter(n => n.id !== 'cal' && currentDaily[n.id] > n.goal * 1.5);
+            if(excesses.length > 0) { html += `<div class="form-section" style="border-right: 4px solid var(--red);"><h3 style="color: var(--red);">🛑 تجاوزات ملحوظة (> 150%)</h3><ul class="report-list">${excesses.map(n => `<li><strong>${n.name}</strong>: استهلاكك <span class="status-danger">${currentDaily[n.id].toFixed(1)}</span> (الهدف ${n.goal})<br><span style="font-size:11px; color:#666;">⚠️ تحذير: ${n.info.excHarm}</span></li>`).join('')}</ul></div>`; }
+            document.getElementById('reportContent').innerHTML = html;
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        function updateDashboard() {
+            nutrientsConfig.forEach(n => currentDaily[n.id] = 0);
+            let mealCalories = { breakfast: 0, lunch: 0, dinner: 0, snacks: 0 };
+            mealTypes.forEach(meal => {
+                const listEl = document.getElementById(`list-${meal.id}`);
+                listEl.innerHTML = '';
+                diary[meal.id].forEach(item => {
+                    const multiplier = item.weight / 100;
+                    const itemCal = (item.baseFood.cal * multiplier) || 0;
+                    const itemPro = (item.baseFood.pro * multiplier) || 0;
+                    mealCalories[meal.id] += itemCal;
+                    nutrientsConfig.forEach(n => { currentDaily[n.id] += (item.baseFood[n.id] * multiplier) || 0; });
+                    listEl.innerHTML += `<li class="meal-item"><div class="meal-item-info"><span class="meal-item-name">${item.name} (${item.weight}g)</span><span class="meal-item-details">${itemCal.toFixed(0)} kcal | ${itemPro.toFixed(1)}g بروتين</span></div><button class="delete-btn" onclick="removeFood('${meal.id}', ${item.id})">×</button></li>`;
+                });
+                document.getElementById(`cal-${meal.id}`).innerText = `${mealCalories[meal.id].toFixed(0)} kcal`;
+            });
+            ['cal', 'pro', 'carb', 'fat'].forEach(id => {
+                const config = nutrientsConfig.find(n => n.id === id);
+                const current = currentDaily[id];
+                const percentage = Math.min((current / config.goal) * 100, 100);
+                const bar = document.querySelector(`#bar-${id} .progress-fill`);
+                bar.style.width = percentage + '%';
+                bar.style.backgroundColor = current > config.goal ? 'var(--red)' : '';
+                document.getElementById(`text-${id}`).innerText = `${current.toFixed(0)} / ${config.goal} ${id === 'cal' ? 'kcal' : 'g'}`;
+            });
+            nutrientsConfig.filter(n => n.group !== 'macros').forEach(n => {
+                const current = currentDaily[n.id];
+                const percentage = Math.min((current / n.goal) * 100, 100).toFixed(0);
+                const wrap = document.getElementById(`wrap-${n.id}`);
+                if(wrap) {
+                    wrap.style.setProperty('--percentage', percentage + '%');
+                    document.getElementById(`val-${n.id}`).innerText = percentage + '%';
+                    document.getElementById(`text-${n.id}`).innerText = `${(current % 1 === 0 ? current : current.toFixed(1))} / ${n.goal}`;
+                    wrap.style.setProperty('--color', current > n.goal * 1.5 ? 'var(--red)' : n.color);
+                }
+            });
+        }
+
+        function saveData() { localStorage.setItem('nutriTrackMasterV2', JSON.stringify({ userSettings: { age: document.getElementById('userAge').value, gender: document.getElementById('userGender').value, weight: document.getElementById('userWeight').value, height: document.getElementById('userHeight').value, activity: document.getElementById('userActivity').value, manualCalGoal: document.getElementById('manualCalGoal').value }, db: rawFoodDB, diary: diary })); }
+        function loadData() {
+            const savedData = localStorage.getItem('nutriTrackMasterV2');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('userAge').value = data.userSettings.age || 25;
+                document.getElementById('userGender').value = data.userSettings.gender || 'male';
+                document.getElementById('userWeight').value = data.userSettings.weight || 75;
+                document.getElementById('userHeight').value = data.userSettings.height || 175;
+                document.getElementById('userActivity').value = data.userSettings.activity || 1.375;
+                document.getElementById('manualCalGoal').value = data.userSettings.manualCalGoal || 2000;
+                if (data.db) rawFoodDB = data.db;
+                if (data.diary) diary = data.diary;
+                applyCalorieGoal(Number(data.userSettings.manualCalGoal) || 2000, Number(data.userSettings.weight) || 75, data.userSettings.gender || 'male');
+                return true;
+            }
+            return false;
+        }
+        initializeApp();
+<script src="database.js"></script>
+<script>
+    // باقي الكود الخاص بك سيبقى كما هو هنا
+    const nutrientsConfig = [ ...
+    </script>
+</body>
+</html>
