@@ -491,8 +491,20 @@
                 document.getElementById('userHeight').value = data.userSettings.height || 175;
                 document.getElementById('userActivity').value = data.userSettings.activity || 1.375;
                 document.getElementById('manualCalGoal').value = data.userSettings.manualCalGoal || 2000;
-                if (data.db) rawFoodDB = data.db;
+                
+                // التعديل هنا: دمج الأطعمة المخصصة فقط وعدم استبدال قاعدة البيانات الرئيسية
+                if (data.db) {
+                    data.db.forEach(savedFood => {
+                        // إذا كان الطعام غير موجود في قاعدة database.js، قم بإضافته
+                        if (!rawFoodDB.find(f => f.name === savedFood.name)) {
+                            rawFoodDB.push(savedFood);
+                        }
+                    });
+                }
+                
+                // استرجاع سجل اليوميات
                 if (data.diary) diary = data.diary;
+                
                 applyCalorieGoal(Number(data.userSettings.manualCalGoal) || 2000, Number(data.userSettings.weight) || 75, data.userSettings.gender || 'male');
                 return true;
             }
